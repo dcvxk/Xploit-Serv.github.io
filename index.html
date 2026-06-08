@@ -219,17 +219,40 @@
       }, 1000);
 
       const virtualFS = { Scripts: {} };
+      
+      // NUEVA FUNCIÓN: Cargar scripts desde index.json
       async function loadScriptList() {
         try {
-          const resp = await fetch('/scripts/');
-          if (!resp.ok) return;
-          const html = await resp.text();
-          const doc = new DOMParser().parseFromString(html, 'text/html');
-          doc.querySelectorAll('a').forEach(a => {
-            const name = a.textContent.trim();
-            if (name.endsWith('.js')) virtualFS.Scripts[name] = { type: 'script' };
-          });
-        } catch (e) {}
+          console.log('Cargando lista de scripts desde /scripts/index.json...');
+          const resp = await fetch('/scripts/index.json');
+          if (!resp.ok) {
+            console.error(`No se pudo cargar index.json: ${resp.status} ${resp.statusText}`);
+            return;
+          }
+          const data = await resp.json();
+          console.log('Scripts encontrados:', data.scripts);
+          
+          if (data.scripts && Array.isArray(data.scripts)) {
+            for (const script of data.scripts) {
+              // Verificar que el script realmente existe
+              try {
+                const checkResp = await fetch(`/scripts/${script}`);
+                if (checkResp.ok) {
+                  virtualFS.Scripts[script] = { type: 'script' };
+                  console.log(`✅ Script cargado: ${script}`);
+                } else {
+                  console.warn(`⚠️ Script no encontrado: ${script}`);
+                }
+              } catch(e) {
+                console.warn(`⚠️ Error verificando ${script}:`, e);
+              }
+            }
+          }
+          
+          console.log(`Total scripts disponibles: ${Object.keys(virtualFS.Scripts).length}`);
+        } catch (e) {
+          console.error('Error cargando index.json:', e);
+        }
       }
 
       const scriptInstances = new Map();
@@ -640,13 +663,16 @@
       function handleCommand(cmd, winId) {
         const [command, arg] = cmd.split(' ');
         switch (command) {
-          case 'help': return 'help | clear | ps | kill <pid> | start <script> | restart <pid>';
+          case 'help': return 'help | clear | ps | kill <pid> | start <script> | restart <pid> | scripts';
           case 'clear':
             const termBody = document.querySelector(`#content-${winId} .terminal-body`);
             if (termBody) termBody.querySelectorAll('div:not(.input-line)').forEach(d => d.remove());
             return null;
           case 'ps':
             return processes.length ? processes.map(p => `${p.pid} ${p.name} ${p.status}`).join('\n') : 'sin procesos';
+          case 'scripts':
+            const disponibles = Object.keys(virtualFS.Scripts);
+            return disponibles.length ? `Scripts disponibles:\n${disponibles.join('\n')}` : 'No hay scripts disponibles';
           case 'kill':
             if (arg) {
               const pid = parseInt(arg);
@@ -672,7 +698,7 @@
         let html = '<div class="explorer-grid">';
         const scripts = virtualFS.Scripts;
         if (Object.keys(scripts).length === 0) {
-          html += '<div style="color:#aaa;">Carpeta vacía (coloque .js en /scripts)</div>';
+          html += '<div style="color:#aaa;">Carpeta vacía. Asegúrate de que /scripts/index.json existe y contiene la lista de scripts.</div>';
         } else {
           for (let f in scripts) {
             html += `
@@ -701,9 +727,15 @@
           if (!container) return;
           let html = '<table class="process-table"><tr><th>PID</th><th>Script</th><th>Estado</th><th>Acción</th></tr>';
           processes.forEach(p => {
-            html += `<tr><td>${p.pid}</td><td>${p.name}</td><td>${p.status}</td>
-              <td><button class="kill-proc" data-pid="${p.pid}">Detener</button>
-              <button class="restart-proc" data-pid="${p.pid}">Reiniciar</button></td></tr>`;
+            html += `<tr>
+              <td>${p.pid}</td>
+              <td>${p.name}</td>
+              <td>${p.status}</td>
+              <td>
+                <button class="kill-proc" data-pid="${p.pid}">Detener</button>
+                <button class="restart-proc" data-pid="${p.pid}">Reiniciar</button>
+              </td>
+            </tr>`;
           });
           html += '</table>';
           container.innerHTML = html;
@@ -728,10 +760,11 @@
       }
 
       async function initDesktop() {
+        console.log('Inicializando desktop...');
         await loadScriptList();
         const savedPositions = loadState();
         createDesktopIcons(savedPositions);
-        // No abrimos terminal automáticamente
+        console.log('Desktop inicializado correctamente');
       }
     })();
   </script>
