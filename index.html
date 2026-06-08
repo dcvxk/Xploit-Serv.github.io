@@ -221,7 +221,7 @@
       const virtualFS = { Scripts: {} };
       async function loadScriptList() {
         try {
-          const resp = await fetch('scripts/');
+          const resp = await fetch('/scripts/');
           if (!resp.ok) return;
           const html = await resp.text();
           const doc = new DOMParser().parseFromString(html, 'text/html');
@@ -612,7 +612,7 @@
         };
 
         try {
-          const response = await fetch(`scripts/${scriptName}`);
+          const response = await fetch(`/scripts/${scriptName}`);
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
           const code = await response.text();
           const context = {
