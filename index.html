@@ -135,7 +135,7 @@
   </style>
 </head>
 <body>
-  <!-- Login overlay (se muestra al inicio) -->
+  <!-- Login overlay -->
   <div id="login-overlay">
     <div class="login-box">
       <h2>XploitOS</h2>
@@ -180,7 +180,6 @@
       const VALID_USER = 'dcvxk';
       const VALID_PASS_B64 = 'MTIzNHg='; 
 
-      // Proceso de login
       function attemptLogin() {
         const user = loginUser.value.trim();
         const pass = loginPass.value;
@@ -202,12 +201,11 @@
       loginPass.addEventListener('keydown', (e) => { if (e.key === 'Enter') attemptLogin(); });
       loginUser.focus();
 
-      // Oculta todo hasta login exitoso
       topBar.style.display = 'none';
       desktop.style.display = 'none';
       windowsContainer.style.display = 'none';
 
-      // ========== IP y Uptime ==========
+      // IP y Uptime
       fetch('https://api.ipify.org?format=json')
         .then(r => r.json()).then(d => document.getElementById('ip-display').textContent = d.ip)
         .catch(() => document.getElementById('ip-display').textContent = 'IP no disponible');
@@ -220,23 +218,24 @@
 
       const virtualFS = { Scripts: {} };
       
-      // NUEVA FUNCIÓN: Cargar scripts desde index.json
+      // FUNCIÓN CORREGIDA - Carga scripts desde index.json
       async function loadScriptList() {
         try {
-          console.log('Cargando lista de scripts desde /scripts/index.json...');
-          const resp = await fetch('/scripts/index.json');
+          console.log('Cargando lista de scripts...');
+          // Usamos la ruta raw de GitHub para evitar problemas de rutas relativas
+          const resp = await fetch('https://raw.githubusercontent.com/dcvxk/Xploit-Serv.github.io/refs/heads/main/scripts/index.json');
           if (!resp.ok) {
-            console.error(`No se pudo cargar index.json: ${resp.status} ${resp.statusText}`);
+            console.error(`Error ${resp.status}: No se pudo cargar index.json`);
             return;
           }
           const data = await resp.json();
-          console.log('Scripts encontrados:', data.scripts);
+          console.log('Scripts encontrados en index.json:', data.scripts);
           
           if (data.scripts && Array.isArray(data.scripts)) {
             for (const script of data.scripts) {
-              // Verificar que el script realmente existe
               try {
-                const checkResp = await fetch(`/scripts/${script}`);
+                // Verificar que el script existe
+                const checkResp = await fetch(`https://raw.githubusercontent.com/dcvxk/Xploit-Serv.github.io/refs/heads/main/scripts/${script}`);
                 if (checkResp.ok) {
                   virtualFS.Scripts[script] = { type: 'script' };
                   console.log(`✅ Script cargado: ${script}`);
@@ -460,7 +459,6 @@
       function closeWindow(winId) {
         const win = document.getElementById(winId);
         if (!win) return;
-        // No permitir cerrar el administrador de procesos
         if (win.querySelector('.window-header span')?.textContent.includes('Administrador de procesos')) return;
         if (win) {
           for (let [scriptName, instance] of scriptInstances.entries()) {
@@ -635,7 +633,8 @@
         };
 
         try {
-          const response = await fetch(`/scripts/${scriptName}`);
+          // Usar raw.githubusercontent para obtener el script
+          const response = await fetch(`https://raw.githubusercontent.com/dcvxk/Xploit-Serv.github.io/refs/heads/main/scripts/${scriptName}`);
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
           const code = await response.text();
           const context = {
@@ -698,7 +697,7 @@
         let html = '<div class="explorer-grid">';
         const scripts = virtualFS.Scripts;
         if (Object.keys(scripts).length === 0) {
-          html += '<div style="color:#aaa;">Carpeta vacía. Asegúrate de que /scripts/index.json existe y contiene la lista de scripts.</div>';
+          html += '<div style="color:#aaa;">Carpeta vacía. Los scripts deberían cargarse desde index.json</div>';
         } else {
           for (let f in scripts) {
             html += `
@@ -760,11 +759,12 @@
       }
 
       async function initDesktop() {
-        console.log('Inicializando desktop...');
+        console.log('=== Inicializando XploitOS ===');
         await loadScriptList();
         const savedPositions = loadState();
         createDesktopIcons(savedPositions);
-        console.log('Desktop inicializado correctamente');
+        console.log('✅ Desktop inicializado correctamente');
+        console.log('📦 Scripts disponibles:', Object.keys(virtualFS.Scripts));
       }
     })();
   </script>
