@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-  <title>XploitOS | Secure Environment</title>
+  <title>XploitOS | Virtual Machine</title>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
@@ -14,7 +14,7 @@
     #desktop {
       position:relative; width:100%; height:100%;
       background: linear-gradient(135deg, rgba(10,14,20,0.55) 0%, rgba(10,14,20,0.35) 100%),
-        url('https://www.kali.org/wallpapers/images/2020.4/kali-nova.png') center/cover no-repeat;
+        url('https://github.com/dcvxk/Xploit-Serv.github.io/blob/main/Dark_Background_Abstract.png?raw=true') center/cover no-repeat;
       background-color:#0a0e14; z-index:1; overflow:hidden;
     }
     /* Login overlay */
@@ -155,7 +155,7 @@
   <div id="top-bar" style="display:none;">
     <div class="left-section">
       <span class="shield-icon"><svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 2.18l7 3.12v4.7c0 4.5-3 8.7-7 9.85-4-1.15-7-5.35-7-9.85V6.3l7-3.12z"/></svg></span>
-      <span>SECURE ENVIRONMENT</span>
+      <span>Xploit Server</span>
     </div>
     <div class="center-ip" id="ip-display">--.---.---.---</div>
     <div class="right-uptime">
@@ -177,9 +177,8 @@
       const loginBtn = document.getElementById('login-btn');
       const loginError = document.getElementById('login-error');
 
-      // Credenciales esperadas (password en base64)
       const VALID_USER = 'dcvxk';
-      const VALID_PASS_B64 = 'MTIzNHg='; // '1234x' en base64
+      const VALID_PASS_B64 = 'MTIzNHg='; 
 
       // Proceso de login
       function attemptLogin() {
